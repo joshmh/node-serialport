@@ -698,6 +698,9 @@ void EIO_SetStatus(uv_work_t* req) {
   if (ioctl(data->fd, TIOCMSET, &data->status) < 0) {
     snprintf(data->errorString, sizeof(data->errorString), "Error %s calling ioctl( ..., TIOCMSET, 0x%x )", strerror(errno), data->status);
   }
+  if (ioctl(data->fd, TIOCMGET, &data->result) < 0) {
+    snprintf(data->errorString, sizeof(data->errorString), "Error %s calling ioctl( ..., TIOCMGET, ... )", strerror(errno));
+  }
 }
 
 #endif
