@@ -358,6 +358,107 @@ void EIO_AfterDrain(uv_work_t* req) {
   delete req;
 }
 
+#ifndef WIN32
+v8::Handle<v8::Value> GetStatus(const v8::Arguments& args) {
+  v8::HandleScope scope;
+
+  // file descriptor
+  if(!args[0]->IsInt32()) {
+    return scope.Close(v8::ThrowException(v8::Exception::TypeError(v8::String::New("First argument must be an int"))));
+  }
+  int fd = args[0]->ToInt32()->Int32Value();
+
+  // callback
+  if(!args[1]->IsFunction()) {
+    return scope.Close(v8::ThrowException(v8::Exception::TypeError(v8::String::New("Second argument must be a function"))));
+  }
+  v8::Local<v8::Value> callback = args[1];
+
+  GetStatusBaton* baton = new GetStatusBaton();
+  memset(baton, 0, sizeof(GetStatusBaton));
+  baton->fd = fd;
+  baton->callback = v8::Persistent<v8::Value>::New(callback);
+
+  uv_work_t* req = new uv_work_t();
+  req->data = baton;
+  uv_queue_work(uv_default_loop(), req, EIO_GetStatus, (uv_after_work_cb)EIO_AfterGetStatus);
+
+  return scope.Close(v8::Undefined());
+}
+
+void EIO_AfterGetStatus(uv_work_t* req) {
+  GetStatusBaton* data = static_cast<GetStatusBaton*>(req->data);
+
+  v8::Handle<v8::Value> argv[2];
+
+  if(data->errorString[0]) {
+    argv[0] = v8::Exception::Error(v8::String::New(data->errorString));
+    argv[1] = v8::Undefined();
+  } else {
+    argv[0] = v8::Undefined();
+    argv[1] = v8::Int32::New(data->result);
+  }
+  v8::Function::Cast(*data->callback)->Call(v8::Context::GetCurrent()->Global(), 2, argv);
+
+  data->callback.Dispose();
+  delete data;
+  delete req;
+}
+
+v8::Handle<v8::Value> SetStatus(const v8::Arguments& args) {
+  v8::HandleScope scope;
+
+  // file descriptor
+  if(!args[0]->IsInt32()) {
+    return scope.Close(v8::ThrowException(v8::Exception::TypeError(v8::String::New("First argument must be an int"))));
+  }
+  int fd = args[0]->ToInt32()->Int32Value();
+
+  // status bits
+  if(!args[1]->IsInt32()) {
+    return scope.Close(v8::ThrowException(v8::Exception::TypeError(v8::String::New("Second argument must be an int"))));
+  }
+  int status = args[1]->ToInt32()->Int32Value();
+
+  // callback
+  if(!args[2]->IsFunction()) {
+    return scope.Close(v8::ThrowException(v8::Exception::TypeError(v8::String::New("Third argument must be a function"))));
+  }
+  v8::Local<v8::Value> callback = args[2];
+
+  SetStatusBaton* baton = new SetStatusBaton();
+  memset(baton, 0, sizeof(SetStatusBaton));
+  baton->fd = fd;
+  baton->status = status;
+  baton->callback = v8::Persistent<v8::Value>::New(callback);
+
+  uv_work_t* req = new uv_work_t();
+  req->data = baton;
+  uv_queue_work(uv_default_loop(), req, EIO_SetStatus, (uv_after_work_cb)EIO_AfterSetStatus);
+
+  return scope.Close(v8::Undefined());
+}
+
+void EIO_AfterSetStatus(uv_work_t* req) {
+  SetStatusBaton* data = static_cast<SetStatusBaton*>(req->data);
+
+  v8::Handle<v8::Value> argv[2];
+
+  if(data->errorString[0]) {
+    argv[0] = v8::Exception::Error(v8::String::New(data->errorString));
+    argv[1] = v8::Undefined();
+  } else {
+    argv[0] = v8::Undefined();
+    argv[1] = v8::Int32::New(data->result);
+  }
+  v8::Function::Cast(*data->callback)->Call(v8::Context::GetCurrent()->Global(), 2, argv);
+
+  data->callback.Dispose();
+  delete data;
+  delete req;
+}
+#endif // !defined(WIN32)
+
 SerialPortParity ToParityEnum(const v8::Handle<v8::String>& v8str) {
   v8::String::AsciiValue str(v8str);
   if(!strcasecmp(*str, "none")) {
@@ -398,6 +499,10 @@ extern "C" {
     NODE_SET_METHOD(target, "list", List);
     NODE_SET_METHOD(target, "flush", Flush);
     NODE_SET_METHOD(target, "drain", Drain);
+#ifndef WIN32
+    NODE_SET_METHOD(target, "getStatus", GetStatus);
+    NODE_SET_METHOD(target, "setStatus", SetStatus);
+#endif
 
 #ifndef WIN32
     SerialportPoller::Init(target);

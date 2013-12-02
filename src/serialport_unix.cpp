@@ -684,4 +684,20 @@ void EIO_Drain(uv_work_t* req) {
   data->result = tcdrain(data->fd);
 }
 
+void EIO_GetStatus(uv_work_t* req) {
+  GetStatusBaton* data = static_cast<GetStatusBaton*>(req->data);
+
+  if (ioctl(data->fd, TIOCMGET, &data->result) < 0) {
+    snprintf(data->errorString, sizeof(data->errorString), "Error %s calling ioctl( ..., TIOCMGET, ... )", strerror(errno));
+  }
+}
+
+void EIO_SetStatus(uv_work_t* req) {
+  SetStatusBaton* data = static_cast<SetStatusBaton*>(req->data);
+
+  if (ioctl(data->fd, TIOCMSET, &data->status) < 0) {
+    snprintf(data->errorString, sizeof(data->errorString), "Error %s calling ioctl( ..., TIOCMSET, 0x%x )", strerror(errno), data->status);
+  }
+}
+
 #endif
