@@ -504,15 +504,15 @@ function SerialPortFactory() {
 
   if (process.platform !== 'win32') {
 
-    const TIOCM_LE = 0x001;
-    const TIOCM_DTR = 0x002;
-    const TIOCM_RTS = 0x004;
-    const TIOCM_ST = 0x008;
-    const TIOCM_SR = 0x010;
-    const TIOCM_CTS = 0x020;
-    const TIOCM_CD = 0x040;
-    const TIOCM_RI = 0x080;
-    const TIOCM_DSR = 0x100;
+    SerialPort.TIOCM_LE = 0x001;
+    SerialPort.TIOCM_DTR = 0x002;
+    SerialPort.TIOCM_RTS = 0x004;
+    SerialPort.TIOCM_ST = 0x008;
+    SerialPort.TIOCM_SR = 0x010;
+    SerialPort.TIOCM_CTS = 0x020;
+    SerialPort.TIOCM_CD = 0x040;
+    SerialPort.TIOCM_RI = 0x080;
+    SerialPort.TIOCM_DSR = 0x100;
 
     SerialPort.prototype.getStatus = function (callback) {
       var self = this;
