@@ -502,6 +502,74 @@ function SerialPortFactory() {
     });
   };
 
+  if (process.platform !== 'win32') {
+
+    const TIOCM_LE = 0x001;
+    const TIOCM_DTR = 0x002;
+    const TIOCM_RTS = 0x004;
+    const TIOCM_ST = 0x008;
+    const TIOCM_SR = 0x010;
+    const TIOCM_CTS = 0x020;
+    const TIOCM_CD = 0x040;
+    const TIOCM_RI = 0x080;
+    const TIOCM_DSR = 0x100;
+
+    SerialPort.prototype.getStatus = function (callback) {
+      var self = this;
+      var fd = this.fd;
+
+      if (!fd) {
+        var err = new Error("Serialport not open.");
+        if (callback) {
+          callback(err);
+        } else {
+          self.emit('error', err);
+        }
+        return;
+      }
+
+      factory.SerialPortBinding.getStatus(fd, function (err, result) {
+        if (err) {
+          if (callback) {
+            callback(err, result);
+          } else {
+            self.emit('error', err);
+          }
+        } else {
+          callback(err, result);
+        }
+      });
+    };
+
+    SerialPort.prototype.setStatus = function (status, callback) {
+      var self = this;
+      var fd = this.fd;
+
+      if (!fd) {
+        var err = new Error("Serialport not open.");
+        if (callback) {
+          callback(err);
+        } else {
+          self.emit('error', err);
+        }
+        return;
+      }
+
+      factory.SerialPortBinding.setStatus(fd, status, function (err, result) {
+        if (err) {
+          if (callback) {
+            callback(err, result);
+          } else {
+            self.emit('error', err);
+          }
+        } else {
+          callback(err, result);
+        }
+      });
+    };
+
+  } // if !'win32'
+
   factory.SerialPort = SerialPort;
   factory.parsers = parsers;
   factory.SerialPortBinding = SerialPortBinding;

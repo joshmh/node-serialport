@@ -52,6 +52,16 @@ v8::Handle<v8::Value> Drain(const v8::Arguments& args);
 void EIO_Drain(uv_work_t* req);
 void EIO_AfterDrain(uv_work_t* req);
 
+#ifndef WIN32
+v8::Handle<v8::Value> GetStatus(const v8::Arguments& args);
+void EIO_GetStatus(uv_work_t* req);
+void EIO_AfterGetStatus(uv_work_t* req);
+
+v8::Handle<v8::Value> SetStatus(const v8::Arguments& args);
+void EIO_SetStatus(uv_work_t* req);
+void EIO_AfterSetStatus(uv_work_t* req);
+#endif
+
 SerialPortParity ToParityEnum(const v8::Handle<v8::String>& str);
 SerialPortStopBits ToStopBitEnum(double stopBits);
 
@@ -135,5 +145,24 @@ public:
   int result;
   char errorString[ERROR_STRING_SIZE];
 };
+
+#ifndef WIN32
+struct GetStatusBaton {
+public:
+  int fd;
+  v8::Persistent<v8::Value> callback;
+  int result;
+  char errorString[ERROR_STRING_SIZE];
+};
+
+struct SetStatusBaton {
+public:
+  int fd;
+  int status;
+  v8::Persistent<v8::Value> callback;
+  int result;
+  char errorString[ERROR_STRING_SIZE];
+};
+#endif
 
 #endif
